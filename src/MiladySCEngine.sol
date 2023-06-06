@@ -35,12 +35,21 @@ pragma solidity >=0.5.0 <0.9.0;
 import {MiladyStableCoin} from "./MiladyStableCoin.sol";
 import {ReentrancyGuard} from "openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
 import {IERC20} from "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import {ReservoirOracle} from "oracle/ReservoirOracle.sol";
 
-contract MiladySCEngine is ReentrancyGuard {
+contract MiladySCEngine is ReentrancyGuard, ReservoirOracle {
     error MiladySCEngine__NeedsMoreThanZero();
     error MiladySCEngine__NotZeroAddress();
     error MiladySCEngine__NotAllowedToken();
     error MiladySCEngine__TransferFailed();
+    error MiladySCEngine__InvalidMessage();
+
+    enum PriceKind {
+        SPOT,
+        TWAP,
+        LOWER,
+        UPPER
+    }
 
     // Note: Keeping this a mapping for now because in case we want to do multi-collateral
     mapping(address => bool) private s_allowedTokens; // token address to boolean
@@ -180,20 +189,28 @@ contract MiladySCEngine is ReentrancyGuard {
     }
 
     function getUsdValue(
-        address token,
+        address collectionAddress, // Pass in the milady contract address
         uint256 amount
     ) public view returns (uint256) {
-        // Get current price of NFTx Milady token
-        address factory = 0x1F98431c8aD98523631AE4a59f267346ea31F984;
-        address weth = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
-        address _pool = IUniswapV3Factory(factory).getPool(token, weth, 10000);
-        // require(_pool != address(0), "No pool");
-        // (int24 tick, ) = OracleLibrary.consult(_pool, block.timestamp);
-        // uint256 quoteAmount = OracleLibrary.getQuoteAtTick(
-        //     tick,
-        //     amount,
-        //     token,
-        //     weth
-        // );
+        ReservoirOracle(0x32dA57E736E05f75aa4FaE2E9Be60FD904492726);
+        bytes32 id = keccak256(
+            abi.encode(
+                keccak256(
+                    "ContractWideCollectionPrice(uint8 kind,uint256 twapHours,address contract)"
+                ),
+                PriceKind.TWAP,
+                24,
+                collectionAddress
+            )
+        );
+        uint256 maxMessageAge = 5 minutes;
+        if (!_verifyMessage(id, maxMessageAge, message)) {
+            revert MiladySCEngine__InvalidMessage();
+        }
+
+        (address messageCurrency, uint256 price) = abi.decode(
+            message.payload,
+            (address, uint256)
+        );
     }
 }
