@@ -51,6 +51,8 @@ contract MiladySCEngine is ReentrancyGuard {
     mapping(address token => bool) private s_allowedTokens; // token address to boolean
     mapping(address user => mapping(address token => uint256 amount))
         private s_collateralDeposited; // Map user to mapping of token address to amount
+    mapping(address user => uint256 amountMscMinted) private s_MSCMinted;
+
     MiladyStableCoin private immutable i_msc; // i for immutable
 
     event CollateralDeposited(
@@ -127,11 +129,66 @@ contract MiladySCEngine is ReentrancyGuard {
 
     function redeemCollateral() external {}
 
-    function mintMsc() external {}
+    /**
+     * @notice follows CEI pattern
+     * @param amountMscToMint The amount of MSC to mint
+     * @notice They must have more collateral value than the minimum threshold
+     */
+    function mintMsc(
+        uint256 amountMscToMint
+    ) external moreThanZero(amountMscToMint) nonReentrant {
+        s_MSCMinted[msg.sender] += amountMscToMint;
+        // Check if they minted too much MSC
+        _revertIfHealthFactorIsBroken(msg.sender);
+    }
 
     function burnMsc() external {}
 
     function liquidate() external {}
 
     function getHealthFactor() external view {}
+
+    function _getAccountInformation(
+        address user
+    )
+        private
+        view
+        returns (uint256 totalMscMinted, uint256 collateralValueInUsd)
+    {
+        totalMscMinted = s_MSCMinted[user];
+        // Need to do some math
+        collateralValueInUsd = getAccountCollateralValue(user);
+    }
+
+    /**
+     * @notice Returns how close to liquidation a user is
+     * If a user goes below 1, then they can get liquidated
+     */
+    function _healthFactor(address user) private view returns (uint256) {
+        // Get the total MSC minted
+        // Get the total collateral value (value is greater than total MSC minted)
+        (
+            uint256 totalMscMinted,
+            uint256 collateralValueInUsd
+        ) = _getAccountInformation(user);
+    }
+
+    function _revertIfHealthFactorIsBroken(address user) internal view {
+        // Check health factor (do they have enough collateral)
+        // Revert if they don't have good health factor ()
+    }
+
+    function getAccountCollateralValue(
+        address user
+    ) public view returns (uint256) {
+        // Look through each collateral token, get amount they have deposited
+        // and map it to the price to get the USD value
+    }
+
+    function getUsdValue(
+        address token,
+        uint256 amount
+    ) public view returns (uint256) {
+        // Get current price of NFTx Milady token
+    }
 }
