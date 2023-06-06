@@ -14,7 +14,7 @@ import {ERC20} from "solady/src/tokens/ERC20.sol";
 import {Ownable} from "solady/src/auth/Ownable.sol";
 
 /**
- * @title Stablecoin
+ * @title Milady Stable Coin
  * @author 𝖒
  * Collateral: Milady NFTx Vault
  * Minting: Algorithmic
@@ -23,13 +23,13 @@ import {Ownable} from "solady/src/auth/Ownable.sol";
  * This is the contract governed by MiladySCEngine. This contract is just the
  * ERC20 implementation of the stablecoin system.
  */
-contract MiladyStablecoin is ERC20, Ownable {
-    error MiladyStablecoin__MustBeMoreThanZero();
-    error MiladyStablecoin__BurnAmountExceedsBalance();
-    error MiladyStablecoin__NotZeroAddress();
+contract MiladyStableCoin is ERC20, Ownable {
+    error MiladyStableCoin__MustBeMoreThanZero();
+    error MiladyStableCoin__BurnAmountExceedsBalance();
+    error MiladyStableCoin__NotZeroAddress();
 
-    string public constant NAME = "Milady Stablecoin";
-    string public constant SYMBOL = "MUSD";
+    string public constant NAME = "Milady Stable Coin";
+    string public constant SYMBOL = "MSC";
     uint8 public constant DECIMALS = 18;
 
     function name() public pure override returns (string memory) {
@@ -47,10 +47,10 @@ contract MiladyStablecoin is ERC20, Ownable {
     function burn(uint256 _amount) external onlyOwner {
         uint256 balance = balanceOf(msg.sender);
         if (_amount == 0) {
-            revert MiladyStablecoin__MustBeMoreThanZero();
+            revert MiladyStableCoin__MustBeMoreThanZero();
         }
         if (balance < _amount) {
-            revert MiladyStablecoin__BurnAmountExceedsBalance();
+            revert MiladyStableCoin__BurnAmountExceedsBalance();
         }
         _burn(msg.sender, _amount);
     }
@@ -60,10 +60,10 @@ contract MiladyStablecoin is ERC20, Ownable {
         uint256 _amount
     ) external onlyOwner returns (bool) {
         if (_to == address(0)) {
-            revert MiladyStablecoin__NotZeroAddress();
+            revert MiladyStableCoin__NotZeroAddress();
         }
         if (_amount <= 0) {
-            revert MiladyStablecoin__MustBeMoreThanZero();
+            revert MiladyStableCoin__MustBeMoreThanZero();
         }
         _mint(_to, _amount);
         return true;
