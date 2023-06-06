@@ -11,6 +11,7 @@
 pragma solidity ^0.8.18;
 
 import {ERC20} from "solady/src/tokens/ERC20.sol";
+import {Ownable} from "solady/src/auth/Ownable.sol";
 
 /**
  * @title Stablecoin
@@ -22,15 +23,14 @@ import {ERC20} from "solady/src/tokens/ERC20.sol";
  * This is the contract governed by MiladySCEngine. This contract is just the
  * ERC20 implementation of the stablecoin system.
  */
-contract MiladyStablecoin is ERC20 {
-    // Name
-    string public constant NAME = "Milady Stablecoin";
-    // Symbol
-    string public constant SYMBOL = "MILADY";
-    // Decimals
-    uint8 public constant DECIMALS = 18;
+contract MiladyStablecoin is ERC20, Ownable {
+    error MiladyStablecoin__MustBeMoreThanZero();
+    error MiladyStablecoin__BurnAmountExceedsBalance();
+    error MiladyStablecoin__NotZeroAddress();
 
-    constructor() {}
+    string public constant NAME = "Milady Stablecoin";
+    string public constant SYMBOL = "MUSD";
+    uint8 public constant DECIMALS = 18;
 
     function name() public pure override returns (string memory) {
         return NAME;
@@ -44,7 +44,28 @@ contract MiladyStablecoin is ERC20 {
         return DECIMALS;
     }
 
-    function burn(uint256 amount) public {
-        _burn(msg.sender, amount);
+    function burn(uint256 _amount) external onlyOwner {
+        uint256 balance = balanceOf(msg.sender);
+        if (_amount == 0) {
+            revert MiladyStablecoin__MustBeMoreThanZero();
+        }
+        if (balance < _amount) {
+            revert MiladyStablecoin__BurnAmountExceedsBalance();
+        }
+        _burn(msg.sender, _amount);
+    }
+
+    function mint(
+        address _to,
+        uint256 _amount
+    ) external onlyOwner returns (bool) {
+        if (_to == address(0)) {
+            revert MiladyStablecoin__NotZeroAddress();
+        }
+        if (_amount <= 0) {
+            revert MiladyStablecoin__MustBeMoreThanZero();
+        }
+        _mint(_to, _amount);
+        return true;
     }
 }
