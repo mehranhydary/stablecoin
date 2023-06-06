@@ -10,6 +10,8 @@
 
 pragma solidity ^0.8.18;
 
+import {ERC20} from "solady/src/tokens/ERC20.sol";
+
 /**
  * @title Stablecoin
  * @author 𝖒
