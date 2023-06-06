@@ -22,6 +22,29 @@ import {ERC20} from "solady/src/tokens/ERC20.sol";
  * This is the contract governed by MiladySCEngine. This contract is just the
  * ERC20 implementation of the stablecoin system.
  */
-contract MiladyStablecoin {
+contract MiladyStablecoin is ERC20 {
+    // Name
+    string public constant NAME = "Milady Stablecoin";
+    // Symbol
+    string public constant SYMBOL = "MILADY";
+    // Decimals
+    uint8 public constant DECIMALS = 18;
+
     constructor() {}
+
+    function name() public pure override returns (string memory) {
+        return NAME;
+    }
+
+    function symbol() public pure override returns (string memory) {
+        return SYMBOL;
+    }
+
+    function decimals() public pure override returns (uint8) {
+        return DECIMALS;
+    }
+
+    function burn(uint256 amount) public {
+        _burn(msg.sender, amount);
+    }
 }
