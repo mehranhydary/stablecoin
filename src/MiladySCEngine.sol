@@ -33,19 +33,31 @@ pragma solidity ^0.8.18;
 
 // Will need this to get the price of an NFTx Milady Vault
 import {MiladyStableCoin} from "./MiladyStableCoin.sol";
-import {IUniswapV2Pair} from "v2-core/contracts/interfaces/IUniswapV2Pair.sol";
-import {FixedPoint} from "v2-periphery/contracts/libraries/FixedPoint.sol";
-import {UniswapV2OracleLibrary} from "v2-periphery/contracts/libraries/UniswapV2OracleLibrary.sol";
-import {UniswapV2Library} from "v2-periphery/contracts/libraries/UniswapV2Library.sol";
+import {ReentrancyGuard} from "openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
+import {IERC20} from "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
-contract MiladySCEngine {
+// import {IUniswapV2Pair} from "v2-core/contracts/interfaces/IUniswapV2Pair.sol";
+// import {FixedPoint} from "v2-periphery/contracts/libraries/FixedPoint.sol";
+// import {UniswapV2OracleLibrary} from "v2-periphery/contracts/libraries/UniswapV2OracleLibrary.sol";
+// import {UniswapV2Library} from "v2-periphery/contracts/libraries/UniswapV2Library.sol";
+
+contract MiladySCEngine is ReentrancyGuard {
     error MiladySCEngine__NeedsMoreThanZero();
     error MiladySCEngine__NotZeroAddress();
     error MiladySCEngine__NotAllowedToken();
+    error MiladySCEngine__TransferFailed();
 
     // Note: Keeping this a mapping for now because in case we want to do multi-collateral
     mapping(address token => bool) private s_allowedTokens; // token address to boolean
+    mapping(address user => mapping(address token => uint256 amount))
+        private s_collateralDeposited; // Map user to mapping of token address to amount
     MiladyStableCoin private immutable i_msc; // i for immutable
+
+    event CollateralDeposited(
+        address indexed user,
+        address indexed token,
+        uint256 indexed amount
+    );
 
     modifier moreThanZero(uint256 amount) {
         if (amount == 0) {
@@ -76,6 +88,7 @@ contract MiladySCEngine {
     function depositCollateralAndMintMsc() external {}
 
     /**
+     * @notice follows CEI pattern (checks, effects, internal interactions)
      * @param tokenCollateralAddress The address of the ERC20 token to deposit as collateral
      * @param amountCollateral The amount of the ERC20 token to deposit as collateral
      */
@@ -87,7 +100,28 @@ contract MiladySCEngine {
         moreThanZero(amountCollateral)
         isAllowedToken(tokenCollateralAddress)
         nonReentrant
-    {}
+    {
+        // Check how much collateral someone has deposited
+        s_collateralDeposited[msg.sender][
+            tokenCollateralAddress
+        ] += amountCollateral;
+
+        emit CollateralDeposited(
+            msg.sender,
+            tokenCollateralAddress,
+            amountCollateral
+        );
+
+        bool success = IERC20(tokenCollateralAddress).transferFrom(
+            msg.sender,
+            address(this),
+            amountCollateral
+        );
+
+        if (!success) {
+            revert MiladySCEngine__TransferFailed();
+        }
+    }
 
     function redeemCollateralForMsc() external {}
 
