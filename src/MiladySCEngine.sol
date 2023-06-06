@@ -29,17 +29,12 @@
  * @notice This contract is very loosely based on the MakerDAO DSS (DAI).
  */
 
-pragma solidity ^0.8.18;
+pragma solidity >=0.5.0 <0.9.0;
 
 // Will need this to get the price of an NFTx Milady Vault
 import {MiladyStableCoin} from "./MiladyStableCoin.sol";
 import {ReentrancyGuard} from "openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
 import {IERC20} from "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
-
-// import {IUniswapV2Pair} from "v2-core/contracts/interfaces/IUniswapV2Pair.sol";
-// import {FixedPoint} from "v2-periphery/contracts/libraries/FixedPoint.sol";
-// import {UniswapV2OracleLibrary} from "v2-periphery/contracts/libraries/UniswapV2OracleLibrary.sol";
-// import {UniswapV2Library} from "v2-periphery/contracts/libraries/UniswapV2Library.sol";
 
 contract MiladySCEngine is ReentrancyGuard {
     error MiladySCEngine__NeedsMoreThanZero();
@@ -48,10 +43,10 @@ contract MiladySCEngine is ReentrancyGuard {
     error MiladySCEngine__TransferFailed();
 
     // Note: Keeping this a mapping for now because in case we want to do multi-collateral
-    mapping(address token => bool) private s_allowedTokens; // token address to boolean
-    mapping(address user => mapping(address token => uint256 amount))
+    mapping(address => bool) private s_allowedTokens; // token address to boolean
+    mapping(address => mapping(address => uint256))
         private s_collateralDeposited; // Map user to mapping of token address to amount
-    mapping(address user => uint256 amountMscMinted) private s_MSCMinted;
+    mapping(address => uint256) private s_MSCMinted;
 
     MiladyStableCoin private immutable i_msc; // i for immutable
 
@@ -75,7 +70,6 @@ contract MiladySCEngine is ReentrancyGuard {
         _;
     }
 
-    // Don't think you need this right now
     constructor(address miladyAddress, address mscAddress) {
         if (miladyAddress == address(0)) {
             revert MiladySCEngine__NotZeroAddress();
@@ -190,5 +184,16 @@ contract MiladySCEngine is ReentrancyGuard {
         uint256 amount
     ) public view returns (uint256) {
         // Get current price of NFTx Milady token
+        address factory = 0x1F98431c8aD98523631AE4a59f267346ea31F984;
+        address weth = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
+        address _pool = IUniswapV3Factory(factory).getPool(token, weth, 10000);
+        // require(_pool != address(0), "No pool");
+        // (int24 tick, ) = OracleLibrary.consult(_pool, block.timestamp);
+        // uint256 quoteAmount = OracleLibrary.getQuoteAtTick(
+        //     tick,
+        //     amount,
+        //     token,
+        //     weth
+        // );
     }
 }

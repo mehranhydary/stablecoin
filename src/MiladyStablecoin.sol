@@ -8,7 +8,7 @@
 // constructor, receive, fallback, external, public, internal,
 // privaate, view, pure functions
 
-pragma solidity ^0.8.18;
+pragma solidity >=0.5.0 <0.9.0;
 
 import {ERC20} from "solady/src/tokens/ERC20.sol";
 import {Ownable} from "solady/src/auth/Ownable.sol";
