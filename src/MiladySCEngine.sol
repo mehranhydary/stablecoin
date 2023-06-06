@@ -40,9 +40,11 @@ import {UniswapV2Library} from "v2-periphery/contracts/libraries/UniswapV2Librar
 
 contract MiladySCEngine {
     error MiladySCEngine__NeedsMoreThanZero();
+    error MiladySCEngine__NotZeroAddress();
+    error MiladySCEngine__NotAllowedToken();
 
     // Note: Keeping this a mapping for now because in case we want to do multi-collateral
-    mapping(address token => bool) private s_priceFeeds; // tokenToPriceFeed
+    mapping(address token => bool) private s_allowedTokens; // token address to boolean
     MiladyStableCoin private immutable i_msc; // i for immutable
 
     modifier moreThanZero(uint256 amount) {
@@ -52,14 +54,22 @@ contract MiladySCEngine {
         _;
     }
 
-    // modifier isAllowedToken(address tokenAddress) {
-    //     revert
-    //     _;
-    // }
+    modifier isAllowedToken(address tokenAddress) {
+        if (s_allowedTokens[tokenAddress] == false) {
+            revert MiladySCEngine__NotAllowedToken();
+        }
+        _;
+    }
 
     // Don't think you need this right now
     constructor(address miladyAddress, address mscAddress) {
-        s_priceFeeds[miladyAddress] = true;
+        if (miladyAddress == address(0)) {
+            revert MiladySCEngine__NotZeroAddress();
+        }
+        if (mscAddress == address(0)) {
+            revert MiladySCEngine__NotZeroAddress();
+        }
+        s_allowedTokens[miladyAddress] = true;
         i_msc = MiladyStableCoin(mscAddress);
     }
 
@@ -72,7 +82,12 @@ contract MiladySCEngine {
     function depositCollateral(
         address tokenCollateralAddress,
         uint256 amountCollateral
-    ) external moreThanZero(amountCollateral) {}
+    )
+        external
+        moreThanZero(amountCollateral)
+        isAllowedToken(tokenCollateralAddress)
+        nonReentrant
+    {}
 
     function redeemCollateralForMsc() external {}
 
