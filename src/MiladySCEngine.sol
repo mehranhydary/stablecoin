@@ -31,10 +31,19 @@
 
 pragma solidity ^0.8.18;
 
+// Will need this to get the price of an NFTx Milady Vault
+import {MiladyStableCoin} from "./MiladyStableCoin.sol";
+import {IUniswapV2Pair} from "v2-core/contracts/interfaces/IUniswapV2Pair.sol";
+import {FixedPoint} from "v2-periphery/contracts/libraries/FixedPoint.sol";
+import {UniswapV2OracleLibrary} from "v2-periphery/contracts/libraries/UniswapV2OracleLibrary.sol";
+import {UniswapV2Library} from "v2-periphery/contracts/libraries/UniswapV2Library.sol";
+
 contract MiladySCEngine {
     error MiladySCEngine__NeedsMoreThanZero();
 
-    mapping(address token => address priceFeed) private s_priceFeeds; // tokenToPriceFeed
+    // Note: Keeping this a mapping for now because in case we want to do multi-collateral
+    mapping(address token => bool) private s_priceFeeds; // tokenToPriceFeed
+    MiladyStableCoin private immutable i_msc; // i for immutable
 
     modifier moreThanZero(uint256 amount) {
         if (amount == 0) {
@@ -43,11 +52,16 @@ contract MiladySCEngine {
         _;
     }
 
-    modifier isAllowedToken(address tokenAddress) {
-        revert _;
-    }
+    // modifier isAllowedToken(address tokenAddress) {
+    //     revert
+    //     _;
+    // }
 
-    constructor(address[] memory allowedTokens, address mscAddress) {}
+    // Don't think you need this right now
+    constructor(address miladyAddress, address mscAddress) {
+        s_priceFeeds[miladyAddress] = true;
+        i_msc = MiladyStableCoin(mscAddress);
+    }
 
     function depositCollateralAndMintMsc() external {}
 
