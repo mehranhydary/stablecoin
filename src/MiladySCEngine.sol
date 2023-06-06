@@ -35,7 +35,6 @@ pragma solidity >=0.5.0 <0.9.0;
 import {MiladyStableCoin} from "./MiladyStableCoin.sol";
 import {ReentrancyGuard} from "openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
 import {IERC20} from "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
-import {ReservoirOracle} from "oracle/ReservoirOracle.sol";
 
 contract MiladySCEngine is ReentrancyGuard, ReservoirOracle {
     error MiladySCEngine__NeedsMoreThanZero();
@@ -192,25 +191,7 @@ contract MiladySCEngine is ReentrancyGuard, ReservoirOracle {
         address collectionAddress, // Pass in the milady contract address
         uint256 amount
     ) public view returns (uint256) {
-        ReservoirOracle(0x32dA57E736E05f75aa4FaE2E9Be60FD904492726);
-        bytes32 id = keccak256(
-            abi.encode(
-                keccak256(
-                    "ContractWideCollectionPrice(uint8 kind,uint256 twapHours,address contract)"
-                ),
-                PriceKind.TWAP,
-                24,
-                collectionAddress
-            )
-        );
-        uint256 maxMessageAge = 5 minutes;
-        if (!_verifyMessage(id, maxMessageAge, message)) {
-            revert MiladySCEngine__InvalidMessage();
-        }
-
-        (address messageCurrency, uint256 price) = abi.decode(
-            message.payload,
-            (address, uint256)
-        );
+        // Only need spot price for Milady vault in eth
+        // Get spot price for ETH in usd
     }
 }
